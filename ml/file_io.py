@@ -12,14 +12,20 @@ def write_data_to_file(data: List[Dict[str, str]], out_filename: str) -> str:
     :param data:
     :return: File name
     """
-    # # Write
-    with open(f'./out_data/{out_filename}.json', 'w') as file:
-        # writing the out_data into the file
-        json.dump(data, file, indent=4)
-
-    print(f"Writing to {file.name}")
-
-    return file.name
+    file_path = f'./out_data/{out_filename}.json'
+    # # read existing data
+    try:
+        with open(file_path, 'r') as file:
+            existing_data = json.load(file)
+    except FileNotFoundError:
+        existing_data = []
+    # Extend data
+    existing_data.extend(data)
+    # Write file
+    with open(file_path, "w") as f:
+        json.dump(existing_data, f, indent=4)
+        print(f"Writing to {f.name}")
+    return f.name
 
 
 def load_data(json_file_path: str) -> List[Dict[str, str]]:
@@ -33,7 +39,7 @@ def load_data(json_file_path: str) -> List[Dict[str, str]]:
     return data
 
 
-def load_embedding(file_path: str = './data/glove/glove.840B.300d.txt', verbose: bool=False) -> Dict[str, np.ndarray]:
+def load_embedding(file_path: str = './data/glove/glove.840B.300d.txt', verbose: bool = False) -> Dict[str, np.ndarray]:
     """
     TODO does this really belong here??
     Loads the GloVe pretrained embeddings as a dictionary
