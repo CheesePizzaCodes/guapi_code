@@ -4,7 +4,7 @@ import re
 
 import pandas as pd
 
-from constants import UNITS
+from constants import UNITS, UNWANTED_COLS
 
 
 def remove_colon_from_titles(data: List[Dict]) -> List[Dict]:
@@ -30,17 +30,22 @@ def has_numbers(_string):
 def ends_with_any_of(target_string: str, string_list: List[str]) -> bool:
     return any(target_string.endswith(ending) for ending in string_list)
 
+
 def is_number_without_units(string):
     # Define a regular expression pattern to match a number
     pattern = r'^[\d,.]+$'
     # Check whether the string matches the pattern
     return bool(re.match(pattern, string))
 
-def is_number_with_units(string):  # TODO careful, this was made by chatgpt
+
+def is_number_with_units(string: str):  #
     # Define a regular expression pattern to match a number followed by units
-    pattern = r'^[\d,.]+ [a-zA-Z]+$'
+    string = str(string)  # sanity check
+    pipe = '|'
+    pattern = f'^[\d,.]+\\s(:?{pipe.join(UNITS)})+$'
     # Check whether the string matches the pattern
     return bool(re.match(pattern, string))
+
 
 def extract_value(raw_string: str) -> Union[float, str]:
     """
@@ -49,7 +54,7 @@ def extract_value(raw_string: str) -> Union[float, str]:
     :return:
     """
     # Remove commas
-    s = raw_string.replace(',', '')
+    s = str(raw_string).replace(',', '')  # sanity check
     # first case: data already numeric
 
     if is_number_without_units(s):
@@ -76,8 +81,6 @@ def extract_units(raw_string: str) -> str:
     units = list(filter(lambda u: u in raw_string, UNITS))
     if not units:  # TODO tis may be obsolete
         return ''
-    if 'm²' in units[0]:
-        print('2')
     return f' [{units[0].strip()}]'
 
 
@@ -91,13 +94,13 @@ def format_data(data: List[Dict[str, str]]) -> pd.DataFrame:
     # data = convert_decimal_separator(data)
     data = add_units_to_titles(data)
     data = convert_values_to_numeric(data)
-    return pd.DataFrame(data)
+    return pd.DataFrame(data).drop(UNWANTED_COLS, axis=1)
 
 
 def test_1():
     from file_io import load_data
 
-    data = load_data('./out_data/finalisimo.json')
+    data = load_data('./out_data/final_4.json')
     data = format_data(data)
     ...
 

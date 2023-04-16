@@ -8,7 +8,7 @@ from typing import List, Dict, Union
 from bs4 import BeautifulSoup as BS
 from urllib.request import urlopen
 
-from file_io import write_data_to_file
+from file_io import write_data_to_json
 
 
 def get_html_from_url(_url: str) -> BS:
@@ -94,7 +94,7 @@ def main():
 
         print(f"Finished parsing boats on page {c}")
         c += 1
-        write_data_to_file(out, 'final_2')
+        write_data_to_json(out, 'final_2')
         # When done parsing, get next page
         try:
             url = get_next_page_url(html)

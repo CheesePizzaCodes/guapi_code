@@ -1,4 +1,5 @@
 import time
+import datetime
 from typing import List, Dict, Union
 
 from bs4 import BeautifulSoup as BS
@@ -9,7 +10,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
-from file_io import write_data_to_file  # (replace this with your actual import)
+from file_io import write_data_to_json  # (replace this with your actual import)
 
 
 def get_html_from_url(_url: str) -> BS:
@@ -55,7 +56,6 @@ def get_html_from_url_dynamic(_url: str) -> Union[BS, None]:
     return None
 
 
-
 def get_next_page_url(current_html: BS) -> str:
     """
     Устаребший
@@ -79,7 +79,7 @@ def get_urls_from_boat_listing(html_doc: BS) -> Union[List[str], None]:
     return url_list
 
 
-def parse_boat_data(boat_html: BS) -> Dict[str, Union[str, None]]:
+def parse_boat_data(boat_html: BS) -> Dict[str, str]:
     tags = boat_html.find_all('td')
     out = {}
     if len(tags) == 0:  # In case getting boat data failed
@@ -88,41 +88,14 @@ def parse_boat_data(boat_html: BS) -> Dict[str, Union[str, None]]:
         try:  # try to transform to strings
             out[tags[i].string.strip()] = tags[i + 1].string.strip()
         except AttributeError as e:
-            out[tags[i].string.strip()] = None
+            out[tags[i].string.strip()] = 'None'
         except Exception as e:  # if this still fails
             continue  # do not add anything
     return out
 
 
 def generate_listing_url(_page_number: int, items_per_page: int = 100) -> str:
-
     return f'https://sailboatdata.com/?sailboats_per_page={items_per_page}&page_number={_page_number - 1}'
-
-
-def main():
-    page_number = 1
-    boats_per_page = 100
-    boat_number = boats_per_page * (page_number - 1)
-    url = generate_listing_url(page_number, boats_per_page)
-    out = []
-    while True:
-        html = get_html_from_url_dynamic(url)
-        if html is None:
-            print(f"Page {page_number} not available. Skipping to page {page_number + 1}.")
-            continue
-        boat_urls = get_urls_from_boat_listing(html)
-        if boat_urls is None:  # if returned list is empty, no more boats are available
-            print("No more boats available. Finished parsing.")
-            break
-        for boat_url in boat_urls:
-            boat_data = process_boat_data(boat_url)
-            out.append(boat_data)
-            print(f"Finished parsing boat number {boat_number}")
-            boat_number += 1
-        print(f"Finished parsing boats on page {page_number}")
-        page_number += 1
-        url = generate_listing_url(page_number)
-        write_data_to_file(out, 'final_2')  # (Uncomment and replace with your actual function) TODO make this append instead of overwrite
 
 
 def process_boat_data(boat_url: str) -> Dict[str, str | None]:
@@ -136,6 +109,34 @@ def process_boat_data(boat_url: str) -> Dict[str, str | None]:
     boat_data = parse_boat_data(boat_html)
     boat_data["url"] = boat_url
     return boat_data
+
+
+def main():
+    OUT_FILENAME = 'final_4'
+    page_number = 49
+    boats_per_page = 100
+    boat_number = boats_per_page * (page_number - 1)
+    url = generate_listing_url(page_number, boats_per_page)
+    while True:  # Iterate over the pages of boat listing
+        html = get_html_from_url_dynamic(url)
+        if html is None:  # Guard clause in case listing retrieval fails
+            print(f"Page {page_number} not available. Skipping to page {page_number + 1}.")
+            continue
+        boat_urls = get_urls_from_boat_listing(html)
+        if boat_urls is None:  # guard clause. if returned list is empty, no more boats are available
+            print("No more boats available. Finished parsing.")
+            break
+        out = []  # initialize collector for boat data
+        for boat_url in boat_urls:  # Boat url list collection successful
+            boat_data = process_boat_data(boat_url)
+            out.append(boat_data)
+            print(f"Finished parsing boat number {boat_number}")
+            boat_number += 1
+        print(f"Finished parsing boats on page {page_number}")
+        print(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+        page_number += 1
+        url = generate_listing_url(page_number, boats_per_page)  # Generate next page URL
+        write_data_to_json(out, OUT_FILENAME)
 
 
 if __name__ == "__main__":

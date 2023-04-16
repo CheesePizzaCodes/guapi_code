@@ -2,12 +2,19 @@ import json
 from typing import List, Dict, Tuple
 
 import numpy as np
+import pandas as pd
 from gensim.scripts.glove2word2vec import glove2word2vec
 
 
-def write_data_to_file(data: List[Dict[str, str]], out_filename: str) -> str:
-    """
+def write_data_to_xlsx(data: pd.DataFrame, filename) -> str:
+    pth = f'./out_data/xl/{filename}.xlsx'
+    data.to_excel(pth)
+    return pth
 
+def write_data_to_json(data: List[Dict[str, str]], out_filename: str) -> str:
+    """
+    IMPURE FUNCTION
+    Loads an output file, extends it, and saves it. Returns the name of the file.
     :param out_filename:
     :param data:
     :return: File name
