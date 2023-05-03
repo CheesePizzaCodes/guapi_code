@@ -10,7 +10,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
-from file_io import write_data_to_json  # (replace this with your actual import)
+from file_io import write_scrape_data_to_json  # (replace this with your actual import)
 
 
 def get_html_from_url(_url: str) -> BS:
@@ -136,7 +136,7 @@ def main():
         print(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
         page_number += 1
         url = generate_listing_url(page_number, boats_per_page)  # Generate next page URL
-        write_data_to_json(out, OUT_FILENAME)
+        write_scrape_data_to_json(out, OUT_FILENAME)
 
 
 if __name__ == "__main__":

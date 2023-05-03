@@ -2,19 +2,20 @@
 Module for processing the scientific language.
 Main objective is clustering the terms to reduce unique categories of e.g. manufacturing process, etc.
 """
-from typing import List, Union
 from distance import levenshtein
 from collections import defaultdict
 
 import numpy as np
+import pickle
 from sklearn.cluster import AffinityPropagation, KMeans
-import pandas as pd
 from scipy.spatial.distance import pdist
 from gensim.models import KeyedVectors
 
 import file_io
 import formatting
-from file_io import load_embedding, save_embedding_w2v
+from file_io import save_embedding_w2v
+from formatting import replace_strings
+import gpt_language_processing
 
 
 def preprocess_to_vec(term, embeddings):
@@ -30,17 +31,19 @@ def preprocess_to_vec(term, embeddings):
     return vec
 
 
-def tokenize_terms(unique_terms):
+def tokenize_terms(unique_terms: np.ndarray):
     """
     Uses the GloVe pretrained embeddings to transform the terms into vectors (tokens)
     :param unique_terms:
     :return:
     """
     # save embedding in correct format
-    file_path = save_embedding_w2v()
+    file_path = save_embedding_w2v(billions_of_tokens=6, dim=50)
     # load embedding
     embeddings = KeyedVectors.load_word2vec_format(file_path, binary=False)
+    # vec_fn = np.vectorize(preprocess_to_vec)
     term_vectors = [preprocess_to_vec(term, embeddings) for term in unique_terms]
+    # term_vectors = vec_fn(unique_terms, )
     return term_vectors
 
 
@@ -62,21 +65,8 @@ def display_clusters(unique_terms, labels):
             print(f"  - {process}")
     return cluster_dict
 
+
 # Usage
-
-
-def replace_strings(_words: Union[List[str], np.ndarray], to_replace: str, replace_with: str) -> np.ndarray:
-    return np.asarray([word.replace(to_replace, replace_with) for word in _words])
-
-
-def remove_periods(words_list) -> np.ndarray:
-    """
-    Remove points from the list of terms for avoiding problems
-    :param words_list:
-    :return:
-    """
-    [word.replace('.', '') for word in words_list]
-    return np.array([word.replace('.', '') for word in words_list])
 
 
 def cluster_affprop(unique_terms):
@@ -98,18 +88,44 @@ def cluster_affprop(unique_terms):
     print(output)
 
 
-if __name__ == '__main__':
-    data = file_io.load_data('./out_data/finalisimo.json')  # sailboat data
-    data = formatting.format_data(data)  # dataframe
+def classify(terms):
+    foam = filter_any(['foam', 'cell', 'pvc', 'airex'], terms)
+    wood = filter_any(['balsa', 'wood', ], terms)
+    solid = filter_any(['solid', 'no core'], terms)
 
+    return dict(foam=foam,
+                wood=wood,
+                solid=solid)
+
+
+def filter_any(options, terms):
+    return list(filter(lambda term: any(word in term.lower() for word in options), terms))
+
+def main():
+    data = file_io.load_formatted_data('final')
     attrs = ['Hull Type', 'Rigging Type', 'Construction']  # TODO keep this list elsewhere
-    i = 1
+    i = 2
 
-    words = data[attrs[i]].values  # select column
+    words = data[attrs[i]].values  # select column to use for clustering
     words = np.unique(np.asarray(words, dtype='str'))  # remove duplicates
     words = replace_strings(words, 'Frac.', 'Fractional')
     # cluster_affprop(words)
 
-    tokens = tokenize_terms(words)
-    kmeans = cluster_kmeans(10, tokens)
-    display_clusters(words, kmeans.labels_)
+    out = classify(words)
+    # _tokens = tokenize_terms(words)
+    # kmeans = cluster_kmeans(100, _tokens)
+    # display_clusters(words, kmeans.labels_)
+
+    # with open('./out_data/fitted_nlp_models/p1.pkl', 'wb') as file:
+    #     pickle.dump(kmeans, file)
+
+    # response = gpt_language_processing.main(words)
+    data['Construction Type'] = data['Construction'].map(
+        {value: key for key, values in out.items() for value in values}
+    )
+    file_io.write_formatted_data_to_json(data, 'final')
+
+
+if __name__ == '__main__':
+    main()
+

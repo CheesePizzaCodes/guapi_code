@@ -2,6 +2,7 @@ from typing import List, Dict, Union
 
 import re
 
+import numpy as np
 import pandas as pd
 
 from constants import UNITS, UNWANTED_COLS
@@ -98,12 +99,29 @@ def format_data(data: List[Dict[str, str]]) -> pd.DataFrame:
 
 
 def test_1():
-    from file_io import load_data
+    from file_io import load_scrape_data
 
-    data = load_data('./out_data/final_4.json')
+    data = load_scrape_data('./out_data/final_4.json')
     data = format_data(data)
+
     ...
+
+
 
 
 if __name__ == '__main__':
     test_1()
+
+
+def remove_periods(words_list) -> np.ndarray:
+    """
+    Remove points from the list of terms for avoiding problems
+    :param words_list:
+    :return:
+    """
+    [word.replace('.', '') for word in words_list]
+    return np.array([word.replace('.', '') for word in words_list])
+
+
+def replace_strings(_words: Union[List[str], np.ndarray], to_replace: str, replace_with: str) -> np.ndarray:
+    return np.asarray([word.replace(to_replace, replace_with) for word in _words])
