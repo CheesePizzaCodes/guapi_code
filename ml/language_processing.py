@@ -2,13 +2,13 @@
 Module for processing the scientific language.
 Main objective is clustering the terms to reduce unique categories of e.g. manufacturing process, etc.
 """
+import re
+from typing import List
+
 import pandas as pd
 from distance import levenshtein
 from collections import defaultdict
-import re
-
 import numpy as np
-import pickle
 from sklearn.cluster import AffinityPropagation, KMeans
 from scipy.spatial.distance import pdist
 from gensim.models import KeyedVectors
@@ -17,7 +17,7 @@ import file_io
 import formatting
 from file_io import save_embedding_w2v
 from formatting import replace_strings
-import gpt_language_processing
+
 
 
 def preprocess_to_vec(term, embeddings):
@@ -49,9 +49,10 @@ def tokenize_terms(unique_terms: np.ndarray):
     return term_vectors
 
 
-def cluster_kmeans(k: int, term_tokens):
+def cluster_kmeans(k: int, term_tokens) -> KMeans:
     kmeans = KMeans(n_clusters=k, random_state=0)
-    return kmeans.fit(term_tokens)
+    fitted: KMeans = kmeans.fit(term_tokens)
+    return fitted
 
 
 def display_clusters(unique_terms, labels):
@@ -88,32 +89,61 @@ def cluster_affprop(unique_terms):
         print(" - *%s:* %s" % (exemplar, cluster_str))
     print(f'{np.unique(affprop.labels_).size} Clusters produced')
     print(output)
+    return output
 
 
 def manual_classify(terms):
-    foam = filter_any(['foam', 'cell', 'pvc', 'airex'], terms)
-    wood = filter_any(['balsa', 'wood', ], terms)
+    foam = filter_any(['foam', 'cell', 'pvc', 'airex', 'klegcell'], terms)
+    wood = filter_any(['balsa', 'wood', 'balsa'], terms)
     solid = filter_any(['solid', 'no core'], terms)
     other = filter_any(['carbon', 'steel', 'aluminum', 'alu'], terms)
 
     return dict(foam=foam,
                 wood=wood,
-                solid=solid)
+                solid=solid,
+                other=other,)
 
 
-def filter_any(options, terms):
-    # return list(filter(lambda term: any(term.lower().contains(fr'\b{word}\b', regex=True) for word in options), terms))
+def filter_any(options: List[str], terms: List[str]) -> List[str]:
+    """
+    Filters a list of terms based on the presence of any word from a list of options, using
+    regular expressions for exact word matching and considering word boundaries. The search
+    is case-insensitive and avoids matching substrings (e.g., "sand" won't match "sandwich").
+
+    Example:
+    options = ["sand", "castle"]
+    terms = ["The sand is warm.", "I love sandwiches.", "Sand castles are fun.", "This is not a sandwich."]
+    filtered_terms = filter_any(options, terms)  # Output: ['The sand is warm.', 'Sand castles are fun.']
+
+    :param options: A list of words to search for in the terms list.
+    :param terms: A list of terms to filter based on the presence of any word from the options list.
+    :return: A list containing the filtered terms that include at least one word from the options list.
+    """
     return list(filter(lambda term: any(re.search(fr'\b{word}\b', term, re.IGNORECASE) for word in options), terms))
 
 
-def preprocess_sentences(sentences: pd.Series) -> pd.Series:
+def preprocess_sentences(sentences: pd.Series) -> np.ndarray:
+    """
+    Preprocesses a pandas Series of sentences by filling NA values, replacing certain characters,
+    removing extra spaces, and converting to lowercase.
+
+    The function performs the following preprocessing steps:
+    1. Replaces NA values with empty strings.
+    2. Replaces '&' characters with 'and'.
+    3. Replaces consecutive whitespace characters with a single space.
+    4. Removes non-alphanumeric characters (except spaces) and converts the sentences to lowercase.
+
+    :param sentences: A pandas Series containing sentences to be preprocessed.
+    :return: A numpy array containing the unique preprocessed sentences.
+    """
     sentences = sentences.fillna('')
     sentences = sentences.str.replace('&', 'and')
+    sentences = sentences.str.replace(r'\s+', ' ', regex=True)
     sentences_clean: pd.Series = sentences.str.replace(r'[^\w\s]', ' ', regex=True).str.lower()
     clean_count: pd.Series = sentences_clean.value_counts()
     sentences_exploded: pd.Series = sentences_clean.str.split().explode()
     exploded_count = sentences_exploded.value_counts()
-    return sentences_clean
+    return sentences_clean.unique()
 
 
 def main():
@@ -123,21 +153,21 @@ def main():
 
     words = data[attrs[i]]  # select column to use for clustering
     words = preprocess_sentences(words)
-    # words = np.unique(np.asarray(words, dtype='str'))  # remove duplicates
     # words = replace_strings(words, 'Frac.', 'Fractional')
-    # cluster_affprop(words)
 
-    out = manual_classify(words)
-    # _tokens = tokenize_terms(words)
-    # kmeans = cluster_kmeans(100, _tokens)
-    # display_clusters(words, kmeans.labels_)
+    affprop = cluster_affprop(words)
+
+    manual = manual_classify(words)
+
+    _tokens = tokenize_terms(words)
+    kmeans = cluster_kmeans(100, _tokens)
+    display_clusters(words, kmeans.labels_)
 
     # with open('./out_data/fitted_nlp_models/p1.pkl', 'wb') as file:
     #     pickle.dump(kmeans, file)
 
-    # response = gpt_language_processing.main(words)
     data['Construction Type'] = data['Construction'].map(
-        {value: key for key, values in out.items() for value in values}
+        {value: key for key, values in manual.items() for value in values}
     )
     file_io.write_formatted_data_to_json(data, 'final')
 
