@@ -2,8 +2,10 @@
 Module for processing the scientific language.
 Main objective is clustering the terms to reduce unique categories of e.g. manufacturing process, etc.
 """
+import pandas as pd
 from distance import levenshtein
 from collections import defaultdict
+import re
 
 import numpy as np
 import pickle
@@ -88,10 +90,11 @@ def cluster_affprop(unique_terms):
     print(output)
 
 
-def classify(terms):
+def manual_classify(terms):
     foam = filter_any(['foam', 'cell', 'pvc', 'airex'], terms)
     wood = filter_any(['balsa', 'wood', ], terms)
     solid = filter_any(['solid', 'no core'], terms)
+    other = filter_any(['carbon', 'steel', 'aluminum', 'alu'], terms)
 
     return dict(foam=foam,
                 wood=wood,
@@ -99,19 +102,32 @@ def classify(terms):
 
 
 def filter_any(options, terms):
-    return list(filter(lambda term: any(word in term.lower() for word in options), terms))
+    # return list(filter(lambda term: any(term.lower().contains(fr'\b{word}\b', regex=True) for word in options), terms))
+    return list(filter(lambda term: any(re.search(fr'\b{word}\b', term, re.IGNORECASE) for word in options), terms))
+
+
+def preprocess_sentences(sentences: pd.Series) -> pd.Series:
+    sentences = sentences.fillna('')
+    sentences = sentences.str.replace('&', 'and')
+    sentences_clean: pd.Series = sentences.str.replace(r'[^\w\s]', ' ', regex=True).str.lower()
+    clean_count: pd.Series = sentences_clean.value_counts()
+    sentences_exploded: pd.Series = sentences_clean.str.split().explode()
+    exploded_count = sentences_exploded.value_counts()
+    return sentences_clean
+
 
 def main():
     data = file_io.load_formatted_data('final')
     attrs = ['Hull Type', 'Rigging Type', 'Construction']  # TODO keep this list elsewhere
     i = 2
 
-    words = data[attrs[i]].values  # select column to use for clustering
-    words = np.unique(np.asarray(words, dtype='str'))  # remove duplicates
-    words = replace_strings(words, 'Frac.', 'Fractional')
+    words = data[attrs[i]]  # select column to use for clustering
+    words = preprocess_sentences(words)
+    # words = np.unique(np.asarray(words, dtype='str'))  # remove duplicates
+    # words = replace_strings(words, 'Frac.', 'Fractional')
     # cluster_affprop(words)
 
-    out = classify(words)
+    out = manual_classify(words)
     # _tokens = tokenize_terms(words)
     # kmeans = cluster_kmeans(100, _tokens)
     # display_clusters(words, kmeans.labels_)
