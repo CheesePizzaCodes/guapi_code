@@ -33,14 +33,16 @@ def preprocess_to_vec(term, embeddings):
     return vec
 
 
-def tokenize_terms(unique_terms: np.ndarray):
+def tokenize_terms(unique_terms: np.ndarray, billions_of_tokens=6, dim=50):
     """
     Uses the GloVe pretrained embeddings to transform the terms into vectors (tokens)
+    :param dim:
+    :param billions_of_tokens:
     :param unique_terms:
     :return:
     """
     # save embedding in correct format
-    file_path = save_embedding_w2v(billions_of_tokens=6, dim=50)
+    file_path = f'./out_data/glove/glove.{billions_of_tokens}B.{dim}d.txt'
     # load embedding
     embeddings = KeyedVectors.load_word2vec_format(file_path, binary=False)
     # vec_fn = np.vectorize(preprocess_to_vec)
@@ -78,7 +80,7 @@ def cluster_affprop(unique_terms):
     mat = np.zeros((_n, _n))
     idx = np.triu_indices(_n, k=1)
     mat[idx] = lev_similarity
-    affprop = AffinityPropagation(affinity="precomputed", damping=0.7, verbose=True, max_iter=50000)
+    affprop = AffinityPropagation(affinity="precomputed", damping=0.9, verbose=True, max_iter=50000)
     affprop.fit(mat)
     output = []
     for cluster_id in np.unique(affprop.labels_):
@@ -88,7 +90,7 @@ def cluster_affprop(unique_terms):
         cluster_str = ", ".join(cluster)
         print(" - *%s:* %s" % (exemplar, cluster_str))
     print(f'{np.unique(affprop.labels_).size} Clusters produced')
-    print(output)
+    for i in output: print(i)
     return output
 
 
@@ -138,6 +140,7 @@ def preprocess_sentences(sentences: pd.Series) -> np.ndarray:
     """
     sentences = sentences.fillna('')
     sentences = sentences.str.replace('&', 'and')
+    sentences = sentences.str.replace('w', 'with')
     sentences = sentences.str.replace(r'\s+', ' ', regex=True)
     sentences_clean: pd.Series = sentences.str.replace(r'[^\w\s]', ' ', regex=True).str.lower()
     clean_count: pd.Series = sentences_clean.value_counts()
@@ -159,12 +162,10 @@ def main():
 
     manual = manual_classify(words)
 
-    _tokens = tokenize_terms(words)
-    kmeans = cluster_kmeans(100, _tokens)
+    tokens = tokenize_terms(words)
+    kmeans = cluster_kmeans(100, tokens)
     display_clusters(words, kmeans.labels_)
 
-    # with open('./out_data/fitted_nlp_models/p1.pkl', 'wb') as file:
-    #     pickle.dump(kmeans, file)
 
     data['Construction Type'] = data['Construction'].map(
         {value: key for key, values in manual.items() for value in values}

@@ -109,9 +109,9 @@ def save_embedding_w2v(billions_of_tokens: int, dim: int) -> str:
     :return: Path to the processed file
     """
     root = f'/glove/glove.{billions_of_tokens}B.{dim}d.txt'
-    file_path = './data' + root
+    in_file_path = './data' + root
     out_file_path = './out_data' + root
-    _ = glove2word2vec(file_path, out_file_path)
+    _ = glove2word2vec(in_file_path, out_file_path)
     print(f'(Number of vectors, Dimensionality of the vectors): {_}')
     return out_file_path
 
