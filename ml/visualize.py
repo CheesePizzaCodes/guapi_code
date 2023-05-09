@@ -9,25 +9,114 @@ from pandas.api.types import is_numeric_dtype, is_string_dtype
 import file_io
 import formatting
 
-
-def scatter_3d_p(df: pd.DataFrame, classes: str = None):
-    col_names = data.columns[0:3]
-    fig = px.scatter_3d(data_frame=df,
-                        x=col_names[0], y=col_names[1], z=col_names[2],
-                        color=classes,
-                        )
-    fig.update_traces(marker_size=2)
-    fig = modify_layout(fig, df)  # makes layout interactive
+def scatter_2d_p(df: pd.DataFrame, classes: str = None) -> go.Figure:
+    labeled_traces = generate_labeled_traces_2d(df, classes)
+    fig = go.Figure(data=labeled_traces)
+    fig = modify_layout_2d(fig, df)  # makes layout interactive
+    return fig
+def scatter_3d_p(df: pd.DataFrame, classes: str = None) -> go.Figure:
+    labeled_traces = generate_labeled_traces_3d(df, classes)
+    fig = go.Figure(data=labeled_traces)
+    fig = modify_layout_3d(fig, df)  # makes layout interactive
     return fig
 
+def generate_hsl_colors(n_colors, saturation=0.7, lightness=0.6):
+    colors = []
+    for i in range(n_colors):
+        hue = i / n_colors
+        hsl_color = f'hsl({hue * 360:.2f}, {saturation * 100:.2f}%, {lightness * 100:.2f}%)'
+        colors.append(hsl_color)
+    return colors
 
-def modify_layout(fig: go.Figure, df: pd.DataFrame) -> go.Figure:
+def generate_labeled_traces_2d(df, classes):
+
+    num, _ = extract_col_names_by_dtype(df)
+    x, y = num[0:2]
+
+    unique_labels = df[classes].unique()
+    color_scale = generate_hsl_colors(len(unique_labels))
+    label_to_color = {label: color for (label, color) in zip(unique_labels, color_scale)}
+    # colors = df[classes].apply(lambda x: label_to_color[x])
+    traces = []
+    for label, color in label_to_color.items():
+        label_df = df[df[classes] == label]  # portion of the data of the correct label
+        trace = go.Scatter(
+            x=label_df[x],
+            y=label_df[y],
+            mode='markers',
+            marker=dict(
+                color=color,
+                size=5,
+            ),
+            text=[f'{x}: {x}<br>{y}: {y}<br>{classes}: {label}'
+                  for x, y in zip(label_df[x], label_df[y])],
+            hoverinfo='text',
+            name=label,
+        )
+        traces.append(trace)
+    return tuple(traces)
+def generate_labeled_traces_3d(df, classes):
+
+    num, _ = extract_col_names_by_dtype(df)
+    x, y, z = num[0:3]
+
+    unique_labels = df[classes].unique()
+    color_scale = generate_hsl_colors(len(unique_labels))
+    label_to_color = {label: color for (label, color) in zip(unique_labels, color_scale)}
+    # colors = df[classes].apply(lambda x: label_to_color[x])
+    traces = []
+    for label, color in label_to_color.items():
+        label_df = df[df[classes] == label]  # portion of the data of the correct label
+        trace = go.Scatter3d(
+            x=label_df[x],
+            y=label_df[y],
+            z=label_df[z],
+            mode='markers',
+            marker=dict(
+                color=color,
+                size=5,
+            ),
+            text=[f'{x}: {x}<br>{y}: {y}<br>{z}: {z}<br>{classes}: {label}'
+                  for x, y, z in zip(label_df[x], label_df[y], label_df[z])],
+            hoverinfo='text',
+            name=label,
+        )
+        traces.append(trace)
+    return tuple(traces)
+
+def modify_layout_2d(fig: go.Figure, df: pd.DataFrame) -> go.Figure:
     """
     Modifies the layout so that it is interactive
     :param fig:
     :param df:
     :return: interactive figure
     """
+    fig.update_traces(marker_size=2)
+    fig.update_layout(
+        scene=dict(
+            xaxis_title='attr_1',
+            yaxis_title='attr_2',
+        ),
+
+        # Add buttons
+        updatemenus=[
+            generate_dropdown_info(axis_id=0, df=df, x_position=0.1),
+            generate_dropdown_info(axis_id=1, df=df, x_position=0.4),
+            # generate_dropdown_info(axis_id=2, df=df, x_position=0.7),
+            # generate_dropdown_info(axis_id=3, df=df, x_position=1.0)
+        ]
+    )
+
+    return fig
+
+def modify_layout_3d(fig: go.Figure, df: pd.DataFrame) -> go.Figure:
+    """
+    Modifies the layout so that it is interactive
+    :param fig:
+    :param df:
+    :return: interactive figure
+    """
+    fig.update_traces(marker_size=2)
     fig.update_layout(
         scene=dict(
             xaxis_title='attr_1',
@@ -36,11 +125,12 @@ def modify_layout(fig: go.Figure, df: pd.DataFrame) -> go.Figure:
         ),
 
         # Add buttons
-        updatemenus=[generate_dropdown_info(axis_id=0, df=df, x_position=0.1),
-                     generate_dropdown_info(axis_id=1, df=df, x_position=0.4),
-                     generate_dropdown_info(axis_id=2, df=df, x_position=0.7),
-                     # generate_info_dict(opt=3, df=df, x_position=1.0)
-                     ]
+        updatemenus=[
+            generate_dropdown_info(axis_id=0, df=df, x_position=0.1),
+            generate_dropdown_info(axis_id=1, df=df, x_position=0.4),
+            generate_dropdown_info(axis_id=2, df=df, x_position=0.7),
+            # generate_dropdown_info(axis_id=3, df=df, x_position=1.0)
+        ]
     )
 
     return fig
@@ -50,14 +140,14 @@ def generate_dropdown_info(axis_id: int, df: pd.DataFrame, x_position) -> dict:
     """
     Creates info to pass as argument to the restyle method
     :param x_position:
-    :param axis_id:
-    :param df:
+    :param axis_id: Axis of the plot to be controlled by this dropdown
+    :param df: Data
     :return:
     """
     opts = ['x', 'y', 'z', 'marker.color']
     axis_name = opts[axis_id]
-    menu_name = f'{axis_name.upper()}-Axis'
-    # menu_name = f'scene.{axis_name}axis.title'
+    # menu_name = f'{axis_name.upper()}-Axis'
+    menu_name = f'scene.{axis_name}axis.title'
     nums, cats = extract_col_names_by_dtype(df)  # here is a bug
 
     if axis_id in (0, 1, 2):
@@ -83,20 +173,21 @@ def generate_dropdown_info(axis_id: int, df: pd.DataFrame, x_position) -> dict:
     )
 
 
-
 def create_buttons(axis_title_name, df, columns):
     buttons = []
     for col in columns:
         # Values
+        # update_dict = {axis_title_name: [df[col].values] * data.shape[1]}
         update_dict = {axis_title_name: [df[col].values]}
         # Layout
         update_layout_dict = {axis_title_name: col} if axis_title_name else {}  # New
         # update_layout_dict = {axis_title_name: col}  # Old
         buttons.append(dict(
             # args=[update_dict, {'trace_indices': [0]}, update_layout_dict],
+            # args=[update_dict, {"visible": [True] * df.shape[1]}, update_layout_dict],
             args=[update_dict, {}, update_layout_dict],
             label=col,
-            method='restyle'
+            method='update',
         ))
     return buttons
 
@@ -114,6 +205,6 @@ if __name__ == '__main__':
     data = file_io.load_formatted_data('final')
     fig2 = scatter_3d_p(data, 'Rigging Type')
     fig2.show()
-    # fig2.write_html('./out_data/html/visualization_rigging.html')
+    inp = input('desired file name:')
+    fig2.write_html(f'./out_data/html/{inp}.html')
     ...
-
