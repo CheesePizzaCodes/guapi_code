@@ -140,7 +140,7 @@ def preprocess_sentences(sentences: pd.Series) -> np.ndarray:
     """
     sentences = sentences.fillna('')
     sentences = sentences.str.replace('&', 'and')
-    sentences = sentences.str.replace('w', 'with')
+    sentences = sentences.str.replace(r'\bw\b', 'with', regex=True)
     sentences = sentences.str.replace(r'\s+', ' ', regex=True)
     sentences_clean: pd.Series = sentences.str.replace(r'[^\w\s]', ' ', regex=True).str.lower()
     clean_count: pd.Series = sentences_clean.value_counts()
