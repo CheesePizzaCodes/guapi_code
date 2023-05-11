@@ -12,12 +12,11 @@ import numpy as np
 from sklearn.cluster import AffinityPropagation, KMeans
 from scipy.spatial.distance import pdist
 from gensim.models import KeyedVectors
+from transformers import AutoTokenizer
+import torch
 
-import file_io
-import formatting
-from file_io import save_embedding_w2v
-from formatting import replace_strings
-
+from file_io import load_model_and_tokenizer, load_formatted_data, write_formatted_data_to_json
+from transformers_nlp import predict, Model
 
 
 def preprocess_to_vec(term, embeddings):
@@ -103,7 +102,7 @@ def manual_classify(terms):
     return dict(foam=foam,
                 wood=wood,
                 solid=solid,
-                other=other,)
+                other=other, )
 
 
 def filter_any(options: List[str], terms: List[str]) -> List[str]:
@@ -124,7 +123,7 @@ def filter_any(options: List[str], terms: List[str]) -> List[str]:
     return list(filter(lambda term: any(re.search(fr'\b{word}\b', term, re.IGNORECASE) for word in options), terms))
 
 
-def preprocess_sentences(sentences: pd.Series) -> np.ndarray:
+def preprocess_sentences(sentences: pd.Series) -> List[str]:
     """
     Preprocesses a pandas Series of sentences by filling NA values, replacing certain characters,
     removing extra spaces, and converting to lowercase.
@@ -146,33 +145,61 @@ def preprocess_sentences(sentences: pd.Series) -> np.ndarray:
     clean_count: pd.Series = sentences_clean.value_counts()
     sentences_exploded: pd.Series = sentences_clean.str.split().explode()
     exploded_count = sentences_exploded.value_counts()
-    return sentences_clean.unique()
+    return sentences_clean.tolist()
+
+
+def transformer_classify(terms: List[str], model_name):
+
+    model, tokenizer, index_mapping = load_model_and_tokenizer(model_name, Model, AutoTokenizer)
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device('cpu')
+    probabilities, predictions, predicted_label_id, predicted_label = predict(terms, model, tokenizer,
+                                                                              device, 0.4, index_mapping)
+    return predicted_label
+
 
 
 def main():
-    data = file_io.load_formatted_data('final')
-    attrs = ['Hull Type', 'Rigging Type', 'Construction']  # TODO keep this list elsewhere
-    i = 2
-
-    words = data[attrs[i]]  # select column to use for clustering
-    words = preprocess_sentences(words)
+    data = load_formatted_data('final')
+    attr = 'Construction'
+    words = preprocess_sentences(data[attr])  # unique
+    words_unique = list(set(words))
     # words = replace_strings(words, 'Frac.', 'Fractional')
 
-    affprop = cluster_affprop(words)
+    # affprop = cluster_affprop(words)
 
-    manual = manual_classify(words)
+    # manual = manual_classify(words)
 
-    tokens = tokenize_terms(words)
-    kmeans = cluster_kmeans(100, tokens)
-    display_clusters(words, kmeans.labels_)
+    # tokens = tokenize_terms(words)
+    # kmeans = cluster_kmeans(100, tokens)
+    # display_clusters(words, kmeans.labels_)
+    #
+    # data['Construction Type'] = data['Construction'].map(
+    #     {value: key for key, values in manual.items() for value in values}
+    # )
+
+    preds = transformer_classify(words_unique, 'distilbert-base-uncased-4-10-0.3-cuda')
+
+    text_to_label = dict(zip(words_unique, preds))
+
+    better_format = {
+        'fg_solid': 'Fiberglass solid laminate',
+        'fg_unclear': 'Fiberglass (not specified)',
+        'fg_foam': 'Fiberglass Foam Sandwich',
+        'fg_wood': 'Fiberglass Wood Sandwich',
+        'metal': 'Metallic',
+        'wood': 'Wood',
+        'others': 'Others',
+    }
+
+    data['Construction Type'] = pd.\
+        Series(preprocess_sentences(data['Construction']))\
+        .map(text_to_label)\
+        .map(better_format)
 
 
-    data['Construction Type'] = data['Construction'].map(
-        {value: key for key, values in manual.items() for value in values}
-    )
-    file_io.write_formatted_data_to_json(data, 'final')
+    write_formatted_data_to_json(data, 'final')
 
 
 if __name__ == '__main__':
     main()
-

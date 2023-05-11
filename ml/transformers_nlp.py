@@ -9,11 +9,20 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, \
     AutoModelForSequenceClassification as AMSC
 
+from file_io import save_model_and_tokenizer
+
+
 @dataclass
 class DataPoint:
     text: str
     label: str
     is_positive: bool
+
+
+class Model(AMSC):
+    def __init__(self, config):
+        super().__init__(config)
+        self.index_mapping = None
 
 
 class MultilabelDataset(Dataset):
@@ -40,10 +49,6 @@ class MultilabelDataset(Dataset):
 
     def id_to_label(self, _id: int) -> str:
         return self.label_inverse_mapping[_id]
-
-    def _override_num_classes(self, num_classes):
-        self.num_classes = num_classes
-        return self
 
     def split(self, train_size, val_size, test_size, shuffle=True):
         if shuffle:
@@ -88,8 +93,13 @@ class MultilabelDataset(Dataset):
         return {key: val.squeeze(0) for key, val in encoding.items()}, probabilities_tensor
 
 
-def predict(text: str, model: AMSC, tokenizer: AutoTokenizer, device: torch.device, threshold: float):
+def predict(text: str | List[str], model: Model, tokenizer: AutoTokenizer,
+            device: torch.device, threshold: float, index_mapping):
+
+    single_operation = True if text is str else False
+
     model.eval()
+    model.to(device)
     inputs = tokenizer(text, truncation=True, max_length=512, padding='max_length', return_tensors='pt')
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
@@ -98,8 +108,16 @@ def predict(text: str, model: AMSC, tokenizer: AutoTokenizer, device: torch.devi
         logits = outputs.logits
         probabilities = torch.sigmoid(logits)
         predictions = (probabilities > threshold).int()
+    predicted_label_ids = probabilities.argmax(axis=1)
 
-    return probabilities, predictions
+    if single_operation:  # try to convert to int
+        predicted_label_ids = predicted_label_ids.item()
+        predicted_labels = index_mapping[predicted_label_ids]
+    else:
+        predicted_label_ids = predicted_label_ids.tolist()
+        predicted_labels = [index_mapping[i] for i in predicted_label_ids]
+
+    return probabilities, predictions, predicted_label_ids, predicted_labels
 
 
 def get_examples():
@@ -112,7 +130,7 @@ def get_examples():
         ("fg or plywood", 'fg_unclear'),
         ("frp", 'fg_unclear'),
         ("fg or wood", 'fg_unclear'),
-        ("", 'fg_unclear'),
+
 
         ("fg solid laminate", 'fg_solid'),
         ("fg solid", 'fg_solid'),
@@ -131,9 +149,9 @@ def get_examples():
         ("fg solid lam  hull sandwich deck", 'fg_solid'),
         ("fg  solid hull and balsa cored deck", 'fg_solid'),
         ("grp with e glass and vinylester resin", 'fg_solid'),
-        ("", 'fg_solid'),
 
-        ("", 'fg_foam'),
+
+
         ("glass foam sand ", 'fg_foam'),
         ("fg foam sandwich", 'fg_foam'),
         ("fg with divinycell core", 'fg_foam'),
@@ -148,7 +166,6 @@ def get_examples():
         ("grp infused pvc foam sandwich", 'fg_foam'),
         ("glass kev nomex", 'fg_foam'),
 
-
         ("wood fg", 'fg_wood'),
         ("fg with plywood cored deck", 'fg_wood'),
         ("wood grp", 'fg_wood'),
@@ -162,7 +179,7 @@ def get_examples():
         ("fg with balsa core deck", 'fg_wood'),
         ("fg wood", 'fg_wood'),
         ("wood fg composite", 'fg_wood'),
-        ("", 'fg_wood'),
+        ("plywood single chine fg", 'fg_wood'),
 
         ("aluminum", 'metal'),
         ("steel alu", 'metal'),
@@ -189,16 +206,40 @@ def get_examples():
         ("plywood epoxy", 'wood'),
         ("plywood single chine", 'wood'),
         ("wood  mahog  on oak ", 'wood'),
-        ("", 'wood'),
+        ("wood  mahogany on oak ", 'wood'),
 
         ("roto molded poly", 'others'),
         ("roto molded polyethylene", 'others'),
         ("carbon fiber", 'others'),
         ("roto moulded polyethylene", 'others'),
         ("", 'others'),
+        ("others", 'others'),
     ]
     negative_examples = [
-
+        # ("wood composite fg", 'wood'),
+        # ("plywood composite", 'wood'),
+        # ("plywood single chine fg", 'wood'),
+        # ("steel alum  or wood", 'wood'),
+        # ("wood grp composite", 'wood'),
+        # ("alu wood", 'wood'),
+        # ("wood fg  1971 ", 'wood'),
+        # ("fg wood deck", 'wood'),
+        # ("fg and plywood", 'wood'),
+        # ("wood planked fg", 'wood'),
+        # ("wood with alternate steel frames", 'wood'),
+        # ("wood  strip planked  molded ply  fg", 'wood'),
+        #
+        # ("wood clinker", 'fg_wood'),
+        # ("steel alum  or wood", 'fg_wood'),
+        # ("wood   carvel", 'fg_wood'),
+        # ("wood strip", 'fg_wood'),
+        # ("alu wood", 'fg_wood'),
+        # ("plywood", 'fg_wood'),
+        # ("wood plank", 'fg_wood'),
+        # ("wood  mahogany on oak ", 'fg_wood'),
+        # ("wood with alternate steel frames", 'fg_wood'),
+        # ("wood cold molded", 'fg_wood'),
+        # ("wood mahogany", 'fg_wood'),
 
     ]
     # negative_examples = [
@@ -294,9 +335,7 @@ def train_(model, device, num_epochs, train_dataset, batch_size, threshold, toke
             train_total += labels.size(0)
             train_correct += (predicted_labels == labels).all(dim=1).sum().item()
 
-
         train_accuracy = train_correct / train_total
-
 
         train_accs.append(train_accuracy)
         print(f'Epoch {epoch + 1}\nTrain Accuracy: {train_accuracy:.4f}')
@@ -307,7 +346,7 @@ def train_(model, device, num_epochs, train_dataset, batch_size, threshold, toke
     return model
 
 
-def validate(model: AMSC, batch_size: int, threshold: float, device: torch.device, tokenizer: AutoTokenizer,
+def validate(model: Model, batch_size: int, threshold: float, device: torch.device, tokenizer: AutoTokenizer,
              val_dataset: MultilabelDataset):
     global val_accs
     # Evaluate the model on the validation dataset:
@@ -330,7 +369,7 @@ def validate(model: AMSC, batch_size: int, threshold: float, device: torch.devic
 
             predicted_labels: torch.Tensor = (probabilities > threshold).int()
 
-            val_true_labels.extend(labels.cpu().numpy().tolist())
+            val_true_labels.extend(labels.cpu().int().tolist())
             val_predicted_labels.extend(predicted_labels.cpu().numpy().tolist())
 
             total += labels.size(0)
@@ -338,9 +377,11 @@ def validate(model: AMSC, batch_size: int, threshold: float, device: torch.devic
 
             print_val_info(inputs, labels, predicted_labels, tokenizer, val_dataset)
 
-
-    confusion_mat = classification_report(val_true_labels, val_predicted_labels)
-
+    confusion_mat = None
+    try:
+        confusion_mat = classification_report(val_true_labels, val_predicted_labels)
+    except:
+        pass
     print(f'Confusion Matrix :\n{confusion_mat}')
 
     accuracy = correct / total
@@ -373,39 +414,35 @@ def print_val_info(inputs, labels, predicted_labels, tokenizer, val_dataset):
         print(f'Text: {text}\nTrue labels: {true_label_names}\nPredicted labels: {predicted_label_names}\n')
 
 
-def main():
-    BATCH_SIZE = 4
-    NUM_EPOCHS = 15
-    MODEL_NAME = "distilbert-base-uncased"
-    THRESHOLD = 0.3
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+def main(batch_size, num_epochs, model_name, threshold, device):
     examples = get_examples()
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     dataset = MultilabelDataset(tokenizer, examples)
 
     label_mapping: dict = dataset.label_mapping
     index_mapping: dict = dataset.label_inverse_mapping
 
-    train_dataset, val_dataset, _ = dataset.split(0.7, 0.3, 0)
+    train_dataset, val_dataset, _ = dataset.split(t := 0.95, 1 - t, 0.)
 
-    model = AMSC.from_pretrained(MODEL_NAME, num_labels=len(index_mapping))
+    model = Model.from_pretrained(model_name, num_labels=len(index_mapping))
 
-    model.to(DEVICE)
+    model.index_mapping = index_mapping  # store index mapping
 
-    model = train_(model, DEVICE, NUM_EPOCHS, train_dataset, BATCH_SIZE, THRESHOLD, tokenizer, val_dataset)
+    model.to(device)
 
-    model = validate(model, BATCH_SIZE, THRESHOLD, DEVICE, tokenizer, val_dataset)
+    model = train_(model, device, num_epochs, train_dataset, batch_size, threshold, tokenizer, val_dataset)
+
+    model = validate(model, BATCH_SIZE, threshold, device, tokenizer, val_dataset)
 
     with open('./data/txt/to_evaluate.txt') as f:
         print(r'\\\\\\\\\\\\\\\Deployment')
         for line in f:
-            probabilities, predictions = predict(line, model, tokenizer, DEVICE, threshold=THRESHOLD)
-
-
-
-            predicted_label_id = probabilities.argmax().item()
-            predicted_label = index_mapping[predicted_label_id]
+            probabilities, predictions, predicted_label_id, predicted_label = predict(line,
+                                                                                      model,
+                                                                                      tokenizer,
+                                                                                      device,
+                                                                                      threshold,
+                                                                                      index_mapping)
 
             prob_dict = {
                 label: round(prob, 4)
@@ -416,16 +453,29 @@ def main():
             # print(f'Text: {line.strip()}\nPredicted label: {predicted_label}\nProbabilities: {prob_dict}\n')
     print(dataset.label_mapping)
 
+    return model, tokenizer
+
+
 if __name__ == '__main__':
+    BATCH_SIZE = 4
+    NUM_EPOCHS = 10
+    MODEL_NAME = "distilbert-base-uncased"
+    THRESHOLD = 0.3
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     train_accs = []
     val_accs = []
-    main()
+    model, tokenizer = main(BATCH_SIZE, NUM_EPOCHS, MODEL_NAME, THRESHOLD, DEVICE)
+
+    variation_name = f'{MODEL_NAME}-{BATCH_SIZE}-{NUM_EPOCHS}-{THRESHOLD}-{DEVICE}'
+
+    save_model_and_tokenizer(model, tokenizer, variation_name)
+
+    print(model.index_mapping)
 
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
     line1, = ax.plot(train_accs)
-    line2, = ax.plot(val_accs)
+    lines = ax.plot(val_accs)
     plt.show()
-
-

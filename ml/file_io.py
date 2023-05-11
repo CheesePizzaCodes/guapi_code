@@ -1,5 +1,7 @@
 import json
 from typing import List, Dict, Tuple, Union
+import os
+
 
 import numpy as np
 import pandas as pd
@@ -34,6 +36,7 @@ def load_formatted_data(filename: str) -> pd.DataFrame:
     """
     pth = f'./out_data/formatted_json/{filename}.json'
     return pd.read_json(pth)
+
 
 def write_scrape_data_to_json(data: List[Dict[str, str]], out_filename: str) -> str:
     """
@@ -116,13 +119,32 @@ def save_embedding_w2v(billions_of_tokens: int, dim: int) -> str:
     return out_file_path
 
 
+def save_model_and_tokenizer(model, tokenizer, model_name):
+    directory = f"./trained_models/{model_name}"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    model.save_pretrained(directory)
+    tokenizer.save_pretrained(directory)
+    with open(f'{directory}/index_mapping.json', 'w') as fp:
+        json.dump(model.index_mapping, fp)
+
+
+def load_model_and_tokenizer(model_name, model_class, tokenizer_class):
+    directory = f"./trained_models/{model_name}"
+    model = model_class.from_pretrained(directory)
+    tokenizer = tokenizer_class.from_pretrained(directory)
+    with open(f'{directory}/index_mapping.json', 'r') as fp:
+        index_mapping = json.load(fp)
+    index_mapping = {int(k): v for k, v in index_mapping.items()}
+    return model, tokenizer, index_mapping
+
+
 if __name__ == '__main__':  # todo refactor to make it better to work with paths / names of files. Create all directories and declare locations inside the functions, make functions only take file names as arguments
     # _data = load_scrape_data('final_4')
     # _data = formatting.format_data(_data)
     # write_formatted_data_to_json(_data, 'final')
-    data2 = load_formatted_data('final')
-
-    terms = data2['Construction'].values
-
+    # data2 = load_formatted_data('final')
+    #
+    # terms = data2['Construction'].values
 
     ...
