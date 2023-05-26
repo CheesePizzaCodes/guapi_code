@@ -28,7 +28,7 @@ def write_formatted_data_to_json(data: pd.DataFrame, out_filename: str) -> str:
     return pth
 
 
-def load_formatted_data(filename: str) -> pd.DataFrame:
+def read_formatted_data(filename: str) -> pd.DataFrame:
     """
 
     :param filename:
@@ -62,7 +62,7 @@ def write_scrape_data_to_json(data: List[Dict[str, str]], out_filename: str) -> 
     return f.name
 
 
-def load_scrape_data(out_filename: str) -> List[Dict[str, str]]:
+def read_scrape_data(out_filename: str) -> List[Dict[str, str]]:
     """
     Loads the out_data in the raw string format
     :param out_filename:
@@ -74,7 +74,7 @@ def load_scrape_data(out_filename: str) -> List[Dict[str, str]]:
     return data
 
 
-def load_embedding(file_path: str = './data/glove/glove.840B.300d.txt', verbose: bool = False) -> Dict[str, np.ndarray]:
+def read_embedding(file_path: str = './data/glove/glove.840B.300d.txt', verbose: bool = False) -> Dict[str, np.ndarray]:
     """
     TODO does this really belong here??
     Loads the GloVe pretrained embeddings as a dictionary
@@ -103,7 +103,7 @@ def load_embedding(file_path: str = './data/glove/glove.840B.300d.txt', verbose:
     return embeddings_index
 
 
-def save_embedding_w2v(billions_of_tokens: int, dim: int) -> str:
+def write_embedding_w2v(billions_of_tokens: int, dim: int) -> str:
     """
     CAREFUL: Impure function
     Uses external tool to save embedding in a specific format
@@ -119,7 +119,7 @@ def save_embedding_w2v(billions_of_tokens: int, dim: int) -> str:
     return out_file_path
 
 
-def save_model_and_tokenizer(model, tokenizer, model_name):
+def write_model_and_tokenizer(model, tokenizer, model_name):
     directory = f"./trained_models/{model_name}"
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -129,7 +129,7 @@ def save_model_and_tokenizer(model, tokenizer, model_name):
         json.dump(model.index_mapping, fp)
 
 
-def load_model_and_tokenizer(model_name, model_class, tokenizer_class):
+def read_model_and_tokenizer(model_name, model_class, tokenizer_class):
     directory = f"./trained_models/{model_name}"
     model = model_class.from_pretrained(directory)
     tokenizer = tokenizer_class.from_pretrained(directory)
