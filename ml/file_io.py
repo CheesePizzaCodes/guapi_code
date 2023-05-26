@@ -1,13 +1,11 @@
 import json
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict
 import os
 
 
 import numpy as np
 import pandas as pd
 from gensim.scripts.glove2word2vec import glove2word2vec
-
-import formatting
 
 
 def write_dataframe_to_xlsx(data: pd.DataFrame, filename) -> str:
