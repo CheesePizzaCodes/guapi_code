@@ -35,7 +35,7 @@ def filter_column_by_values(df: pd.DataFrame, col_name: str, value: str, reverse
 if __name__ == '__main__':
     main()
     col = "Displacement [kg]"
-    data = file_io.load_formatted_data('final')
+    data = file_io.read_formatted_data('final')
 
     cat_data = filter_column_by_values(data, 'Hull Type', 'Cata')
 

@@ -76,8 +76,8 @@ def generate_labeled_traces_3d(df, classes):
                 color=color,
                 size=5,
             ),
-            text=[f'{x}: {x}<br>{y}: {y}<br>{z}: {z}<br>{classes}: {label}'
-                  for x, y, z in zip(label_df[x], label_df[y], label_df[z])],
+            text=[f'{x}: {_x}<br>{y}: {_y}<br>{z}: {_z}<br>{classes}: {label}'
+                  for _x, _y, _z in zip(label_df[x], label_df[y], label_df[z])],
             hoverinfo='text',
             name=label,
         )
@@ -202,8 +202,8 @@ def extract_col_names_by_dtype(df: pd.DataFrame) -> Tuple[List[str], List[str]]:
 
 
 if __name__ == '__main__':
-    data = file_io.load_formatted_data('final')
-    fig2 = scatter_3d_p(data, 'Rigging Type')
+    data = file_io.read_formatted_data('final')
+    fig2 = scatter_3d_p(data, 'Construction Type')
     fig2.show()
     inp = input('desired file name:')
     fig2.write_html(f'./out_data/html/{inp}.html')

@@ -99,9 +99,9 @@ def format_data(data: List[Dict[str, str]]) -> pd.DataFrame:
 
 
 def test_1():
-    from file_io import load_scrape_data
+    from file_io import read_scrape_data
 
-    data = load_scrape_data('./out_data/final_4.json')
+    data = read_scrape_data('./out_data/final_4.json')
     data = format_data(data)
 
     ...

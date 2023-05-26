@@ -9,7 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, \
     AutoModelForSequenceClassification as AMSC
 
-from file_io import save_model_and_tokenizer
+from file_io import write_model_and_tokenizer
 
 
 @dataclass
@@ -469,7 +469,7 @@ if __name__ == '__main__':
 
     variation_name = f'{MODEL_NAME}-{BATCH_SIZE}-{NUM_EPOCHS}-{THRESHOLD}-{DEVICE}'
 
-    save_model_and_tokenizer(model, tokenizer, variation_name)
+    write_model_and_tokenizer(model, tokenizer, variation_name)
 
     print(model.index_mapping)
 

@@ -15,7 +15,7 @@ from gensim.models import KeyedVectors
 from transformers import AutoTokenizer
 import torch
 
-from file_io import load_model_and_tokenizer, load_formatted_data, write_formatted_data_to_json
+from file_io import read_model_and_tokenizer, read_formatted_data, write_formatted_data_to_json
 from transformers_nlp import predict, Model
 
 
@@ -150,7 +150,7 @@ def preprocess_sentences(sentences: pd.Series) -> List[str]:
 
 def transformer_classify(terms: List[str], model_name):
 
-    model, tokenizer, index_mapping = load_model_and_tokenizer(model_name, Model, AutoTokenizer)
+    model, tokenizer, index_mapping = read_model_and_tokenizer(model_name, Model, AutoTokenizer)
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device('cpu')
     probabilities, predictions, predicted_label_id, predicted_label = predict(terms, model, tokenizer,
@@ -160,7 +160,7 @@ def transformer_classify(terms: List[str], model_name):
 
 
 def main():
-    data = load_formatted_data('final')
+    data = read_formatted_data('final')
     attr = 'Construction'
     words = preprocess_sentences(data[attr])  # unique
     words_unique = list(set(words))
