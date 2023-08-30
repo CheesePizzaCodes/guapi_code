@@ -82,10 +82,9 @@ def update_scatter(x_col, y_col, z_col, color_col):
     return updated_fig
 
 
-def open_browser():
-    webbrowser.open('http://127.0.0.1:8050/')
+
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0')
 
