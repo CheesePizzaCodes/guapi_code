@@ -30,7 +30,6 @@ def write_formatted_data_to_json(data: pd.DataFrame, out_filename: str) -> str:
 
 def read_formatted_data(filename: str) -> pd.DataFrame:
     """
-
     :param filename:
     :return:
     """
