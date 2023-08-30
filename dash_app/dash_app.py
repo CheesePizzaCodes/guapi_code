@@ -23,7 +23,7 @@ class Label(Enum):
 # Create a DataFrame with 50 attributes
 
 
-df = pd.read_json('./data/final.json')  # TODO make this a global constant
+df = pd.read_json('./dash_app/data/final.json')  # TODO make this a global constant
 df_string_view = df.select_dtypes(include='object')
 df_number_view = df.select_dtypes(include=[np.float64, ])
 # Add a label column for coloring. Let's assume there are 10 different labels.
