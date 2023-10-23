@@ -4,7 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fa6374eb-70fe-4a68-b24c-0f819270a930" name="Changes" comment="wat" />
+    <list default="true" id="fa6374eb-70fe-4a68-b24c-0f819270a930" name="Changes" comment="wat">
+      <change afterPath="$PROJECT_DIR$/.idea/guapi_code.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_04_2023_02_41_[Changes]/shelved.patch" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_04_2023_02_41__Changes_.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dash_app/assets/style.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dash_app/dash_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml/dash_app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml/file_io.py" beforeDir="false" afterPath="$PROJECT_DIR$/ml/file_io.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.bat" beforeDir="false" afterPath="$PROJECT_DIR$/setup.bat" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -38,7 +52,7 @@
     </favorite-branches>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="tiny" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -69,8 +83,8 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/simon/codebase/guapi_code/dash_app&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/simon/codebase/guapi_code&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
 }</component>
   <component name="Push.Settings">
@@ -81,19 +95,17 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\simon\codebase\guapi_code\dash_app" />
       <recent name="C:\Users\simon\codebase\guapi_code" />
       <recent name="C:\Users\simon\codebase\guapi_code\ml" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\simon\codebase\guapi_code\dash_app\data" />
       <recent name="C:\Users\simon\codebase\guapi_code\dash_app" />
       <recent name="C:\Users\simon\codebase\guapi_code\ml" />
       <recent name="C:\Users\simon\codebase\guapi_code\ml\data" />
     </key>
   </component>
   <component name="RunManager" selected="Python.dash_app">
-    <configuration name="dash_app" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="dash_app" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="guapi_code" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -101,11 +113,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ml" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dash_app/dash_app.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\simon\codebase\guapi_code\dash_app\dash_app.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -241,16 +253,17 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.language_processing" />
+      <item itemvalue="Python.visualize" />
       <item itemvalue="Python.dash_app" />
       <item itemvalue="Python.file_io" />
-      <item itemvalue="Python.language_processing" />
       <item itemvalue="Python.statistical_analysis (1)" />
       <item itemvalue="Python.test" />
       <item itemvalue="Python.transformers_nlp" />
-      <item itemvalue="Python.visualize" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.dash_app" />
         <item itemvalue="Python.transformers_nlp" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.statistical_analysis (1)" />
@@ -373,19 +386,7 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="dash_app" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-            </State>
+            <State />
           </value>
         </entry>
       </map>
@@ -413,8 +414,7 @@
     <MESSAGE value="added output raw json folder (crawl results)" />
     <MESSAGE value="added output formatted json" />
     <MESSAGE value="wat" />
-    <MESSAGE value="beginning dash app" />
-    <option name="LAST_COMMIT_MESSAGE" value="beginning dash app" />
+    <option name="LAST_COMMIT_MESSAGE" value="wat" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -524,16 +524,6 @@
           <url>file://$PROJECT_DIR$/dash_app/dash_app.py</url>
           <line>26</line>
           <option name="timeStamp" value="195" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/dash_app/dash_app.py</url>
-          <line>5</line>
-          <option name="timeStamp" value="196" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/dash_app/dash_app.py</url>
-          <line>25</line>
-          <option name="timeStamp" value="197" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
