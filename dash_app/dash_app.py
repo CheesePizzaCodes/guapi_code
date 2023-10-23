@@ -1,3 +1,4 @@
+
 from enum import Enum
 from threading import Timer
 import webbrowser
@@ -9,8 +10,6 @@ from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
 import numpy as np
-
-import file_io
 
 
 # Assuming you have a dataframe 'df' with 50 attributes and a column label for coloring
@@ -24,7 +23,7 @@ class Label(Enum):
 # Create a DataFrame with 50 attributes
 
 
-df = file_io.read_formatted_data('final')  # TODO make this a global constant
+df = pd.read_json('./dash_app/data/final.json')  # TODO make this a global constant
 df_string_view = df.select_dtypes(include='object')
 df_number_view = df.select_dtypes(include=[np.float64, ])
 # Add a label column for coloring. Let's assume there are 10 different labels.
@@ -40,6 +39,11 @@ initial_fig = px.scatter_3d(df,
                             color=df_string_view.columns[0], ).update_traces(marker=dict(size=MARKER_SIZE))
 
 app.layout = html.Div([
+    ### Graph div
+    html.Div(
+        [dcc.Graph(id='scatter-3d', figure=initial_fig), ],
+        style={'width': '85%', 'display': 'inline-block', }),
+
     html.Div([
         html.Label('Select X Axis'),
         dcc.Dropdown(
@@ -61,12 +65,11 @@ app.layout = html.Div([
             id='color',
             options=[{'label': col, 'value': col} for col in df_string_view.columns],
             value=df_string_view.columns[0]),
-    ], style={'width': '15%', 'display': 'inline-block'}),
-    ### Graph div
-    html.Div(
-        [dcc.Graph(id='scatter-3d', figure=initial_fig), ],
-        style={'width': '85%', 'display': 'inline-block', 'height': '100%'}),
-], style={'height': '100vh', 'width': '100%'})
+    ], style={'width': '15%', 'display': 'inline-block', 'vertical-align': 'top'}),
+
+],
+    # style={'height': '100vh', 'width': '100%'}
+)
 
 
 @app.callback(
@@ -79,10 +82,12 @@ def update_scatter(x_col, y_col, z_col, color_col):
     return updated_fig
 
 
-def open_browser():
-    webbrowser.open('http://127.0.0.1:8050/')
+
 
 
 if __name__ == '__main__':
+    host='0.0.0.0'
+
     app.run_server(debug=True)
+                   # , host='0.0.0.0')
 
