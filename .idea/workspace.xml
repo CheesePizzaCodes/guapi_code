@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fa6374eb-70fe-4a68-b24c-0f819270a930" name="Changes" comment="beginning dash app">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="fa6374eb-70fe-4a68-b24c-0f819270a930" name="Changes" comment="wat" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -40,7 +38,7 @@
     </favorite-branches>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="tiny" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -243,13 +241,13 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.language_processing" />
-      <item itemvalue="Python.visualize" />
       <item itemvalue="Python.dash_app" />
       <item itemvalue="Python.file_io" />
+      <item itemvalue="Python.language_processing" />
       <item itemvalue="Python.statistical_analysis (1)" />
       <item itemvalue="Python.test" />
       <item itemvalue="Python.transformers_nlp" />
+      <item itemvalue="Python.visualize" />
     </list>
     <recent_temporary>
       <list>
@@ -375,7 +373,19 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="dash_app" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
@@ -519,6 +529,11 @@
           <url>file://$PROJECT_DIR$/dash_app/dash_app.py</url>
           <line>5</line>
           <option name="timeStamp" value="196" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/dash_app/dash_app.py</url>
+          <line>25</line>
+          <option name="timeStamp" value="197" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

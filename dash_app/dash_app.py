@@ -86,5 +86,8 @@ def update_scatter(x_col, y_col, z_col, color_col):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0')
+    host='0.0.0.0'
+
+    app.run_server(debug=True)
+                   # , host='0.0.0.0')
 
